@@ -2,11 +2,12 @@ import { Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Register.css";
+import { useHistory, Link } from "react-router-dom";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +20,10 @@ const Register = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement the register function
+
+
+
+
   /**
    * Definition for register handler
    * - Function to be called when the user clicks on the register button or submits the register form
