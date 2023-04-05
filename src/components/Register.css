@@ -57,4 +57,14 @@
   .form {
     min-width: 24rem;
   }
+
+/*This was done to push the Register form to the rightside*/
+@media screen and (min-width: 768px) {
+  .content {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;    
+  }
+}
+
 }

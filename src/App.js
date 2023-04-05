@@ -5,6 +5,8 @@ export const config = {
   endpoint: `http://${ipConfig.workspaceIp}:8082/api/v1`,
 };
 
+//console.log("Workspace IP is:", ipConfig.workspaceIp);
+
 function App() {
   return (
     <div className="App">
