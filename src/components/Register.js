@@ -7,7 +7,8 @@ import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Register.css";
-import { useHistory, Link } from "react-router-dom";
+import { useHistory, Link, Switch, Route } from "react-router-dom";
+import Login from "./Login";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -19,10 +20,9 @@ const Register = () => {
 
   const { enqueueSnackbar } = useSnackbar();
 
+  const history = useHistory();
+
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement the register function
-
-
-
 
   /**
    * Definition for register handler
@@ -61,6 +61,7 @@ const Register = () => {
           console.log("POST Successful!");
           setIsLoading(false);
           enqueueSnackbar("Registered successfully", { variant: "success" });
+          history.push("/login", {from: "Register page"})
         })
         .catch((err) => {
           console.log("Axios POST threw an error!");
@@ -81,7 +82,7 @@ const Register = () => {
           setIsLoading(false);
         });
     } // 'if (validateInput)' ends here
-     // BUT THIS COMES AFTER ERROR IS SHOWN. IMPROVE THIS!!
+    // BUT THIS COMES AFTER ERROR IS SHOWN. IMPROVE THIS!!
   };
 
   // TODO: CRIO_TASK_MODULE_REGISTER - Implement user input validation logic
@@ -186,12 +187,13 @@ const Register = () => {
             </Button>
           )}
 
-          {isLoading && (<Box display="flex" flexDirection="row" justifyContent="center"><CircularProgress/></Box>)}
+          {isLoading && (
+            <Box display="flex" flexDirection="row" justifyContent="center">
+              <CircularProgress />
+            </Box>
+          )}
           <p className="secondary-action">
-            Already have an account?{" "}
-            <a className="link" href="#">
-              Login here
-            </a>
+            Already have an account? <Link to="/login">Login here</Link>
           </p>
         </Stack>
       </Box>

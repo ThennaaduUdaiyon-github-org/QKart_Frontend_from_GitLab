@@ -3,14 +3,21 @@ import { Box } from "@mui/system";
 import axios from "axios";
 import { useSnackbar } from "notistack";
 import React, { useState } from "react";
-import { useHistory, Link } from "react-router-dom";
+import { useHistory, Link, Switch, Route } from "react-router-dom";
 import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
 import "./Login.css";
+import Register from "./Register";
 
 const Login = () => {
   const { enqueueSnackbar } = useSnackbar();
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [formData, setFormData] = useState({ username: "", password: "" });
+
+  const history = useHistory();
 
   // TODO: CRIO_TASK_MODULE_LOGIN - Fetch the API response
   /**
@@ -38,6 +45,41 @@ const Login = () => {
    *
    */
   const login = async (formData) => {
+    setIsLoading(true);
+
+    const jsonFormData = {
+      username: formData.username,
+      password: formData.password,
+    };
+
+    // Returns false if criteria is not met
+    if (!validateInput(jsonFormData)) {
+      //
+      return null;
+    }
+
+    axios
+      .post(config.endpoint + "/auth/login", jsonFormData)
+      .then((resp) => {
+        setIsLoading(true);
+        enqueueSnackbar("Logged in successfully", { variant: "success" });
+        persistLogin(resp.data.token, resp.data.username, resp.data.balance);
+        history.push("/", { from: "Login page" });
+        console.log("Response for login is:", resp);
+      })
+      .catch((err) => {
+        setIsLoading(true);
+        if (typeof err.response !== "undefined") {
+          if (err.response.status === 400) {
+            enqueueSnackbar(err.response.data.message, { variant: "error" });
+          }
+        } else {
+          enqueueSnackbar(
+            "Something went wrong. Check that the backend is running, reachable and returns valid JSON.",
+            { variant: "error" }
+          );
+        }
+      });
   };
 
   // TODO: CRIO_TASK_MODULE_LOGIN - Validate the input
@@ -56,6 +98,15 @@ const Login = () => {
    * -    Check that password field is not an empty value - "Password is a required field"
    */
   const validateInput = (data) => {
+    if (data.username === "") {
+      enqueueSnackbar("Username is a required field", { variant: "warning" });
+      return false;
+    }
+    if (data.password === "") {
+      enqueueSnackbar("Password is a required field", { variant: "warning" });
+      return false;
+    }
+    return true;
   };
 
   // TODO: CRIO_TASK_MODULE_LOGIN - Persist user's login information
@@ -75,8 +126,17 @@ const Login = () => {
    * -    `balance` field in localStorage can be used to store the balance amount in the user's wallet
    */
   const persistLogin = (token, username, balance) => {
+    // Originally, stored all data as "userInfo"
+    /*
+    localStorage.setItem(
+      "userInfo",
+      JSON.stringify({ username: username, token: token, balance: balance })
+    );
+    */
+   localStorage.setItem("username", username);
+   localStorage.setItem("token", token);
+   localStorage.setItem("balance", balance);
   };
-
   return (
     <Box
       display="flex"
@@ -87,6 +147,40 @@ const Login = () => {
       <Header hasHiddenAuthButtons />
       <Box className="content">
         <Stack spacing={2} className="form">
+          <h2 className="title">Login</h2>
+          <TextField
+            label="username"
+            variant="outlined"
+            type="text"
+            onChange={(e) =>
+              setFormData({ ...formData, username: e.target.value })
+            }
+          />
+          <TextField
+            label="password"
+            variant="outlined"
+            type="password"
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.target.value })
+            }
+          />
+          {!isLoading && (
+            <Button
+              onClick={() => {
+                login(formData);
+              }}
+              variant="contained"
+            >
+              LOGIN TO QKART
+            </Button>
+          )}
+          {isLoading && (
+            <Box display="flex" flexDirection="row" justifyContent="center">
+              <CircularProgress />
+            </Box>
+          )}
+          <br />
+          Don’t have an account? <Link to="/register"> Register now </Link>
         </Stack>
       </Box>
       <Footer />
