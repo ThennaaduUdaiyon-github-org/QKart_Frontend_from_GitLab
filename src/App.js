@@ -8,6 +8,7 @@ import Products from "./components/Products";
 import Register from "./components/Register";
 import Login from "./components/Login";
 
+// HOW TO TRANSFER THIS IP TO PRODUCTS.JS????
 export const config = {
   endpoint: `http://${ipConfig.workspaceIp}:8082/api/v1`,
 };

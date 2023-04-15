@@ -2,6 +2,7 @@
   min-width: 24rem;
   position: relative;
   left: 4rem;
+  display: block;
 }
 
 .hero {
@@ -44,12 +45,15 @@
   height: 50vh;
 }
 
+/* .search-mobile and .search-desktop are inbuilt????? */
 .search-mobile {
   display: block !important;
 }
 
 .search-desktop {
   display: none !important;
+  /* Adding the below line!!!!1 */
+  width: 60ch;
 }
 
 @media screen and (min-width: 768px) {
@@ -68,5 +72,7 @@
   }
   .search-desktop {
     display: block !important;
+    /* Adding the below line!!!!1 */
+    width: 60ch;
   }
 }

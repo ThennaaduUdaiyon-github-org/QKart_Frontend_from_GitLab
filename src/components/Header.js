@@ -1,4 +1,7 @@
+import { Search } from "@mui/icons-material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { InputAdornment } from "@mui/material";
+import { TextField } from "@mui/material";
 import { Avatar, Button, Stack } from "@mui/material";
 import Box from "@mui/material/Box";
 import React, { useEffect, useState } from "react";
@@ -23,6 +26,11 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
         <img src="logo_light.svg" alt="QKart-icon"></img>
       </Box>
       {/*When coming from Products page, hasHiddenAuthButtons is undefined!!!*/}
+
+      {/* {!hasHiddenAuthButtons && (
+        
+      )} */}
+
       {hasHiddenAuthButtons && (
         <Button
           name="back to explore"
@@ -38,9 +46,32 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
         </Button>
       )}
 
-      {/* When coming from login page but not logged in... 
+      {/* When coming from products page ("/") but not logged in... 
       Also check out https://stackoverflow.com/questions/16010827/html5-localstorage-checking-if-a-key-exists
       */}
+
+      {/* {!hasHiddenAuthButtons && !localStorage.getItem("username") && (
+        <Box>
+          <TextField
+            fullWidth
+            placeholder="Search for items/categories"
+            name="search"
+            size="small"
+            // sx={{width: "40ch"}}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {children}
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+      )} */}
+
+      {children && !hasHiddenAuthButtons && !localStorage.getItem("username") && (
+        <Box>{children}</Box>
+      )}
 
       {!hasHiddenAuthButtons && !localStorage.getItem("username") && (
         <Box component="div">
@@ -54,6 +85,7 @@ const Header = ({ children, hasHiddenAuthButtons }) => {
           >
             Login
           </Button>
+
           <Button
             name="register"
             variant="contained"
