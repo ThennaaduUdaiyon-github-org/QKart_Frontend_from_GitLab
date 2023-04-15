@@ -15,11 +15,11 @@ import { AddShoppingCart } from "@mui/icons-material";
 import { CardActionArea } from "@mui/material";
 
 // HOW TO MAKE THE IMAGE DISPLAY FROM TOP AND NOT FROM CENTRE???????
-const useStyles = makeStyles({
-  card: {},
-  media: { height: 300 },
-  text: { fontWeight: "bold" },
-});
+// const useStyles = makeStyles({
+//   card: {},
+//   media: { height: 300 },
+//   text: { fontWeight: "bold" },
+// });
 
 const ProductCard = ({ product, handleAddToCart }) => {
   // const obj = {
@@ -32,7 +32,7 @@ const ProductCard = ({ product, handleAddToCart }) => {
   //   id: "PmInA797xJhMIPti",
   // };
 
-  const classes = useStyles();
+  // const classes = useStyles();
 
   //const [rating, setRating] = useState(4);
 
@@ -42,13 +42,17 @@ const ProductCard = ({ product, handleAddToCart }) => {
     <Card className="card">
       <CardActionArea>
         <CardMedia
-          className={classes.media}
+          sx={{ height: 300 }}
+          // className={classes.media}
           component="img"
           image={product.image}
         ></CardMedia>
         <CardContent>
           <Typography variant="subtitle1">{product.name}</Typography>
-          <Typography variant="subtitle1" className={classes.text}>
+          <Typography variant="subtitle1" 
+          sx = {{ fontWeight: "bold" }}
+          // className={classes.text}
+          >
             ${product.cost}
           </Typography>
 
