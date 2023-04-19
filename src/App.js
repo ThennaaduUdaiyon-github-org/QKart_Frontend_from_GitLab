@@ -7,6 +7,7 @@ import { ThemeProvider } from "@mui/material";
 import Products from "./components/Products";
 import Register from "./components/Register";
 import Login from "./components/Login";
+import Checkout from "./components/Checkout";
 
 // HOW TO TRANSFER THIS IP TO PRODUCTS.JS????
 export const config = {
@@ -28,6 +29,9 @@ function App() {
         </Route>
         <Route path="/login">
           <Login />
+        </Route>
+        <Route path="/checkout">
+          <Checkout />
         </Route>
       </Switch>
     </div>

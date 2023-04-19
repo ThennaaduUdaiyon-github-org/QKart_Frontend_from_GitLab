@@ -13,7 +13,7 @@ import "./Cart.css";
 // Definition of Data Structures used
 /**
  * @typedef {Object} Product - Data on product available to buy
- * 
+ *
  * @property {string} name - The name or title of the product
  * @property {string} category - The category that the product belongs to
  * @property {number} cost - The price to buy the product
@@ -24,7 +24,7 @@ import "./Cart.css";
 
 /**
  * @typedef {Object} CartItem -  - Data on product added to cart
- * 
+ *
  * @property {string} name - The name or title of the product in cart
  * @property {string} qty - The quantity of product added to cart
  * @property {string} category - The category that the product belongs to
@@ -39,7 +39,7 @@ import "./Cart.css";
  *
  * @param { Array.<{ productId: String, qty: Number }> } cartData
  *    Array of objects with productId and quantity of products in cart
- * 
+ *
  * @param { Array.<Product> } productsData
  *    Array of objects with complete data on all available products
  *
@@ -48,6 +48,22 @@ import "./Cart.css";
  *
  */
 export const generateCartItemsFrom = (cartData, productsData) => {
+  const cartItems = [];
+  const products = productsData;
+  cartData.forEach((data) => {
+    const product = products.filter((product) => {
+      return product._id === data.productId;
+    });
+    console.log(data)
+    console.log(product)
+    const details = {
+      ...data,
+      ...product[0],
+    };
+    // console.log(details);
+    cartItems.push(details);
+  });
+  return cartItems;
 };
 
 /**
@@ -60,29 +76,41 @@ export const generateCartItemsFrom = (cartData, productsData) => {
  *    Value of all items in the cart
  *
  */
-export const getTotalCartValue = (items = []) => {
+export const getTotalCartValue = (items) => {
+  let total = 0;
+  if (items.length > 0) {
+    for (let i = 0; i < items.length; i++) {
+      total += items[i].cost * items[i].qty;
+    }
+  }
+  return total;
 };
 
+export const getTotalItems = (items) => {
+  let total = 0;
+  if (items.length > 0) {
+    for (let i = 0; i < items.length; i++) {
+      total += items[i].qty;
+    }
+  }
+  return total;
+};
 
 /**
  * Component to display the current quantity for a product and + and - buttons to update product quantity on cart
- * 
+ *
  * @param {Number} value
  *    Current quantity of product in cart
- * 
+ *
  * @param {Function} handleAdd
  *    Handler function which adds 1 more of a product to cart
- * 
+ *
  * @param {Function} handleDelete
  *    Handler function which reduces the quantity of a product in cart by 1
- * 
- * 
+ *
+ *
  */
-const ItemQuantity = ({
-  value,
-  handleAdd,
-  handleDelete,
-}) => {
+const ItemQuantity = ({ value, handleAdd, handleDelete }) => {
   return (
     <Stack direction="row" alignItems="center">
       <IconButton size="small" color="primary" onClick={handleDelete}>
@@ -100,24 +128,22 @@ const ItemQuantity = ({
 
 /**
  * Component to display the Cart view
- * 
+ *
  * @param { Array.<Product> } products
  *    Array of objects with complete data of all available products
- * 
+ *
  * @param { Array.<Product> } items
  *    Array of objects with complete data on products in cart
- * 
+ *
  * @param {Function} handleDelete
  *    Current quantity of product in cart
- * 
- * 
+ *
+ *
  */
-const Cart = ({
-  products,
-  items = [],
-  handleQuantity,
-}) => {
 
+const Cart = ({ products, items, handleQuantity, isReadOnly }) => {
+  const history = useHistory();
+  // console.log(items)
   if (!items.length) {
     return (
       <Box className="cart empty">
@@ -133,36 +159,133 @@ const Cart = ({
     <>
       <Box className="cart">
         {/* TODO: CRIO_TASK_MODULE_CART - Display view for each cart item with non-zero quantity */}
-        <Box
-          padding="1rem"
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Box color="#3C3C3C" alignSelf="center">
-            Order total
-          </Box>
+        {items.map((item) => (
           <Box
-            color="#3C3C3C"
-            fontWeight="700"
-            fontSize="1.5rem"
-            alignSelf="center"
-            data-testid="cart-total"
+            display="flex"
+            alignItems="flex-start"
+            padding="1rem"
+            key={item._id}
           >
-            ${getTotalCartValue(items)}
+            <Box className="image-container">
+              <img
+                // Add product image
+                src={item.image}
+                // Add product name as alt eext
+                alt={item.name}
+                width="100%"
+                height="100%"
+              />
+            </Box>
+            <Box
+              display="flex"
+              flexDirection="column"
+              justifyContent="space-between"
+              height="6rem"
+              paddingX="1rem"
+            >
+              <div>{item.name}</div>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                {!isReadOnly && (
+                  <ItemQuantity
+                    value={item.qty}
+                    handleAdd={() =>
+                      handleQuantity(item.productId, item.qty + 1)
+                    }
+                    handleDelete={() =>
+                      handleQuantity(item.productId, item.qty - 1)
+                    }
+                  />
+                )}
+                {isReadOnly && <strong>Qty: {item.qty}</strong>}
+                <Box padding="0.5rem" fontWeight="700">
+                  ${item.cost}
+                </Box>
+              </Box>
+            </Box>
           </Box>
-        </Box>
+        ))}
 
-        <Box display="flex" justifyContent="flex-end" className="cart-footer">
-          <Button
-            color="primary"
-            variant="contained"
-            startIcon={<ShoppingCart />}
-            className="checkout-btn"
+        {!isReadOnly && (
+          <Box
+            padding="1rem"
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
           >
-            Checkout
-          </Button>
-        </Box>
+            <Box color="#3C3C3C" alignSelf="center">
+              <strong>Order total</strong>
+            </Box>
+            <Box
+              color="#3C3C3C"
+              fontWeight="700"
+              fontSize="1.5rem"
+              alignSelf="center"
+              data-testid="cart-total"
+            >
+              ${getTotalCartValue(items)}
+            </Box>
+          </Box>
+        )}
+
+        {isReadOnly && (
+          <Box
+            mt={6}
+            borderTop={6}
+            borderColor="#E9F5E1"
+            boxShadow="3"
+            padding="1rem"
+            display="flex"
+            justifyContent="space-between"
+            flexDirection="column"
+          >
+            <Box fontWeight="700" fontSize="1.5rem">
+              <strong>Order Details</strong>
+            </Box>
+            <Box display="flex" justifyContent="space-between" mt={1}>
+              <Box>Products</Box>
+              <Box>{getTotalItems(items)}</Box>
+            </Box>
+            <Box display="flex" justifyContent="space-between" mt={1}>
+              <Box>Subtotal</Box>
+              <Box> ${getTotalCartValue(items)}</Box>
+            </Box>
+            <Box display="flex" justifyContent="space-between" mt={1}>
+              <Box>Shipping Charges</Box> 
+              <Box>${0}</Box>
+            </Box>
+            <Box
+              mt={1}
+              color="#3C3C3C"
+              fontWeight="700"
+              fontSize="1.5rem"
+              data-testid="cart-total"
+              display="flex"
+              justifyContent="space-between"
+            >
+              <Box>Total</Box> <Box>${getTotalCartValue(items)}</Box>
+            </Box>
+          </Box>
+        )}
+
+        {!isReadOnly && (
+          <Box display="flex" justifyContent="flex-end" className="cart-footer">
+            <Button
+              color="primary"
+              variant="contained"
+              startIcon={<ShoppingCart />}
+              className="checkout-btn"
+              onClick={() => {
+                history.push("/checkout");
+              }}
+            >
+              Checkout
+            </Button>
+          </Box>
+        )}
       </Box>
     </>
   );

@@ -12,16 +12,13 @@ import React, { useEffect, useState } from "react";
 import { config } from "../App";
 import Footer from "./Footer";
 import Header from "./Header";
-import "./Products.css";
 import ProductCard from "./ProductCard";
+import Cart, { generateCartItemsFrom } from "./Cart";
+import "./Products.css";
 
 // Definition of Data Structures used
 /**
  * @typedef {Object} Product - Data on product available to buy
-
-
-
-
 /**
  * @typedef {Object} CartItem -  - Data on product added to cart
  * 
@@ -31,31 +28,23 @@ import ProductCard from "./ProductCard";
  * @property {number} cost - The price to buy the product
  * @property {number} rating - The aggregate rating of the product (integer out of five)
  * @property {string} image - Contains URL for the product image
- * @property {string} productId - Unique ID for the product
- */
-
-/**
  * @property {string} _id - Unique ID for the product
  */
 
-// OPTIONAL: WHEN PAGE LOADS WITH SLOW 3G, SEE AND MODIFY THE ORDER IN WHICH ELEMENTS
-// ARE LOADED
-
 const Products = () => {
-  const [arrayOfPdts, setArrayOfPdts] = useState([]);
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const [searchBarIsEmpty, setSearchBarIsEmpty] = useState(true);
-  const [noResultsFound, setNoResultsFound] = useState(false);
-
+  const loggedIn = window.localStorage.getItem("username");
+  const token = window.localStorage.getItem("token");
   const { enqueueSnackbar } = useSnackbar();
+  const [state, setState] = useState({
+    products: [],
+    loading: false,
+    cartItems: []
+  });
+  const [debounceTimeout, setDebounceTimeout] = useState(
+    setTimeout(() => {}, 500)
+  );
+  const [cartLoad, setCartLoad] = useState(false);
 
-  let prevTimerId = -1;
-
-  useEffect(() => {
-    performAPICall();
-  }, []);
 
   // TODO: CRIO_TASK_MODULE_PRODUCTS - Fetch products data and store it
   /**
@@ -95,48 +84,40 @@ const Products = () => {
    * }
    */
 
-  const performAPICall = async () => {
-    setIsLoading(true);
-    try {
-      const respObj = await axios.get(config.endpoint + "/products");
-      //console.log("Array of products is: ", respObj.data);
-      setIsLoading(false);
-      setArrayOfPdts(respObj.data);
-      //console.log(respObj.data);
-      return respObj.data;
-    } catch (err) {
-      setIsLoading(false);
+  useEffect(() => {
+    performAPICall();
+  }, []);
 
-      if (typeof err.response !== "undefined") {
-        const respCode = err.response.status;
-        if (respCode === 400) {
-          enqueueSnackbar(err.response.data.message, { variant: "error" });
-        }
-      } else {
+  useEffect(() => {
+    fetchCart(token);
+  }, [cartLoad]);
+
+  const performAPICall = async () => {
+    setState((preState) => ({
+      ...preState,
+      loading: true,
+    }));
+    await axios
+      .get(`${config.endpoint}/products`)
+      .then((response) => {
+        setState((preState) => ({
+          ...preState,
+          products: response.data,
+          loading: false,
+        }));
+        setCartLoad(true);
+      })
+      .catch(() => {
         enqueueSnackbar(
-          "Something went wrong. Check that the backend is running, reachable and returns valid JSON.",
+          "Something went wrong. Check the backend console for more details",
           { variant: "error" }
         );
-      }
-
-      //console.log("OOPS! The followign error was encountered: \n", err);
-      return null;
-    }
+        setState((preState) => ({
+          ...preState,
+          loading: false,
+        }));
+      });
   };
-
-  // THIS METHOD WAS NOT WORKING. RAJESH -> MAKE ARRAYofPDTS A STATE VAR. SO THAT
-  // WHEN IT'S updated, re-rendering happens!
-
-  // let arr = [];
-  // arr = async performAPICall();
-  // console.log(arr);
-
-  // let arr = (async () => {
-  //   const x = await performAPICall();
-  //   return x;
-  // })();
-
-  // console.log("Array is: ", arr);
 
   // TODO: CRIO_TASK_MODULE_PRODUCTS - Implement search logic
   /**
@@ -153,52 +134,29 @@ const Products = () => {
    *
    */
 
-  // CAN WE REUSE PERFORMAPICALL FOR PERFORMSEARCH FUNCTION?????
   const performSearch = async (text) => {
-    if (text === "") {
-      setSearchBarIsEmpty(true);
-    }
-
-    // If error is encountered in try, control leaves all other statements
-    // and directly jumps to catch????
-    else {
-      setSearchBarIsEmpty(false);
-      try {
-        const respObj = await axios.get(
-          config.endpoint + `/products/search?value=${text}`
-        );
-        if (respObj) {
-          //console.log("Inside IF block!");
-          setNoResultsFound(false);
-        }
-        //console.log("Will I get called after re-rendering???");
-        //console.log(respObj);
-        // Using setState and not inside onChange, works!!!!!
-        setArrayOfPdts(respObj.data);
-        return respObj.data;
-      } catch (err) {
-        setNoResultsFound(true);
-        //console.log("Error inside performSearch!! ");
-        // Using console.dir() prints the error object as JSON!
-        //console.dir(err);
-        if (typeof err.response !== "undefined") {
-          const respCode = err.response.status;
-          if (String(respCode).slice(0, 2) === "40") {
-            enqueueSnackbar(err.response.statusText, { variant: "error" });
-            // BELOW LINE DOESN'T WORK!! DIFFERENT RESPONSES HAVE DIFFERENT STRUCTURES??
-            // enqueueSnackbar(err.response.data.message, { variant: "error" });
-          }
-          // ELSE IS NOT WORKING!!!!!
+    await axios
+      .get(`${config.endpoint}/products/search?value=${text}`)
+      .then((response) => {
+        setState((preState) => ({
+          ...preState,
+          products: response.data,
+        }));
+      })
+      .catch((error) => {
+        if (error.response !== undefined && error.response.status === 404) {
+          setState((preState) => ({
+            ...preState,
+            products: [],
+          }));
+          enqueueSnackbar("No products found", { variant: "error" });
         } else {
-          //console.log("Inside else!");
           enqueueSnackbar(
-            "Something went wrong. Check that the backend is running, reachable and returns valid JSON.",
+            "Something went wrong. Check the backend console for more details",
             { variant: "error" }
           );
         }
-        return [];
-      }
-    }
+      });
   };
 
   // TODO: CRIO_TASK_MODULE_PRODUCTS - Optimise API calls with debounce search implementation
@@ -213,16 +171,18 @@ const Products = () => {
    *    Timer id set for the previous debounce call
    *
    */
-  const debounceSearch = (event, debounceTimeout) => {
-    //console.log("Inside debounceSearch function: ", debounceTimeout);
 
-    // SCENARIO: BY THE TIME NEXT CALL COMES, PREVIOUS SETTIMEOUT HAD EXPIRED.
-    // BUT IT'S timer ID will still be stored in 'prevTimerId'.
-    // So, clearTimeout(expired_process's ID) will not throw error????????
-    if (prevTimerId) {
-      clearTimeout(prevTimerId);
-    }
-    prevTimerId = debounceTimeout;
+  const handleSearch = (event) => {
+    debounceSearch(event, debounceTimeout);
+  };
+
+  const debounceSearch = (event, debounceTimeout) => {
+    clearTimeout(debounceTimeout);
+    setDebounceTimeout(
+      setTimeout(() => {
+        performSearch(event.target.value);
+      }, 500)
+    );
   };
 
   /**
@@ -259,6 +219,17 @@ const Products = () => {
 
     try {
       // TODO: CRIO_TASK_MODULE_CART - Pass Bearer token inside "Authorization" header to get data from "GET /cart" API and return the response data
+      const response = await axios.get(`${config.endpoint}/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (state.products.length !== 0) {
+        setState((preState) => ({
+          ...preState,
+          cartItems: generateCartItemsFrom(response.data, state.products),
+        }));
+      }
     } catch (e) {
       if (e.response && e.response.status === 400) {
         enqueueSnackbar(e.response.data.message, { variant: "error" });
@@ -287,7 +258,17 @@ const Products = () => {
    *    Whether a product of given "productId" exists in the "items" array
    *
    */
-  const isItemInCart = (items, productId) => {};
+
+  const isItemInCart = (items, productId) => {
+    let checkItem = false;
+    items.forEach((item) => {
+      if (item.productId === productId) 
+      {
+        checkItem = true;
+      }
+    });
+    return checkItem;
+  };
 
   /**
    * Perform the API call to add or update items in the user's cart and update local cart data to display the latest cart
@@ -325,6 +306,12 @@ const Products = () => {
    *      "message": "Product doesn't exist"
    * }
    */
+
+  const handleCart = (productId) => {
+    addToCart(token, state.cartItems, state.products, productId, 1);
+    console.log("state.items cart", state.cartItems)
+  };
+
   const addToCart = async (
     token,
     items,
@@ -332,15 +319,57 @@ const Products = () => {
     productId,
     qty,
     options = { preventDuplicate: false }
-  ) => {};
+  ) => {
+    if (token) {
+      console.log("addtocart", items);
+      if (!isItemInCart(items, productId)) {
+        addInCart(productId, qty);
+      } else {
+        enqueueSnackbar(
+          "Item already in cart. Use the cart sidebar to update quantity or remove item",
+          { variant: "warning" }
+        );
+      }
+    } else {
+      enqueueSnackbar("Login to add an item to the Cart", {
+        variant: "warning",
+      });
+    }
+  };
+
+  const handleQuantity = (productId, qty) => {
+    addInCart(productId, qty);
+  };
+
+  const addInCart = async (productId, qty) => {
+    await axios
+      .post(
+        `${config.endpoint}/cart`,
+        { productId: productId, qty: qty },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((response) => {
+        // console.log("3", response.data, state.products)
+        setState((preState) => ({
+          ...preState,
+          cartItems: generateCartItemsFrom(response.data, state.products),
+        }));
+      })
+      .catch((error) => {
+        enqueueSnackbar("Something went wrong", { variant: "error" });
+      });
+  };
 
   return (
     <div>
-      <Header
-        children={
+      <Header loggedIn={loggedIn} hasHiddenAuthButtons>
+        <Box sx={{ width: "45vw" }}>
           <TextField
             className="search-desktop"
-            sx={{ width: "60ch" }}
             size="small"
             fullWidth
             InputProps={{
@@ -350,26 +379,11 @@ const Products = () => {
                 </InputAdornment>
               ),
             }}
-            // WILL THIS WORK??? FUNCTION IS IN PRODUCTS.JS. BUT COMPONENT IS PASSED
-            // TO HEADER.JS!!
-
-            // HOW TO LINK 2 SEARCH BARS TOGETHER????
-            onChange={(e) => {
-              const debounceTimeout = setTimeout(function () {
-                performSearch(e.target.value);
-              }, 500);
-              debounceSearch(e, debounceTimeout);
-            }}
-            // ONLY HTML IS VISIBLE IN WEB PAGE INSPECT. HOW TO INSPECT REACT JS COMPONENTS??????
-            placeholder="Search for items/categories"
+            onChange={handleSearch}
+            placeholder="Search for items/categories."
             name="search"
           />
-        }
-      >
-        {/* TRYING TO PASS THE SEARCH BAR FROM HERE...
-        BECAUSE CORRESPONDING STYLE "search-desktop" IS AVAILABLE ONLY IN
-        PRODUCTS.CSS */}
-        {/* TODO: CRIO_TASK_MODULE_PRODUCTS - Display search bar in the header for Products page */}
+        </Box>
       </Header>
 
       {/* Search view for mobiles */}
@@ -384,83 +398,86 @@ const Products = () => {
             </InputAdornment>
           ),
         }}
-        onChange={(e) => {
-          //const respData = performSearch(e.target.value)
-          //USING SETSTATE HERE THROWS ERROR!!!!
-          //setArrayOfPdts(respData);
-
-          // DOES CALLING SETTIMEOUT AGAIN CANCEL THE INITIAL CALL???
-          const debounceTimeout = setTimeout(function () {
-            performSearch(e.target.value);
-          }, 500);
-          debounceSearch(e, debounceTimeout);
-        }}
-        // ONLY HTML IS VISIBLE IN WEB PAGE INSPECT. HOW TO INSPECT REACT JS COMPONENTS??????
+        onChange={handleSearch}
         placeholder="Search for items/categories"
         name="search"
       />
-      <Grid container>
-        <Grid item className="product-grid">
-          {/* THIS HAD TO BE SPECIFIED AS STRING .. "10rem". Here, overrode the height in 
-          Products.css */}
-          <Box className="hero" sx={{ height: "15rem" }}>
-            <p className="hero-heading">
-              India’s <span className="hero-highlight">FASTEST DELIVERY</span>{" "}
-              to your door step
-            </p>
-          </Box>
-        </Grid>
-      </Grid>
-
-      {/* HOW TO GET SPACING BETWEEN HERO IMAGE AND FIRST ROW???? */}
-      <Grid container rowSpacing={1} columnSpacing={2} justifyContent="center">
-        {searchBarIsEmpty &&
-          !isLoading &&
-          arrayOfPdts.map((pdtInfo) => (
-            <Grid item md={3} xs={6} key={pdtInfo._id}>
-              <ProductCard product={pdtInfo}></ProductCard>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={loggedIn !== null ? 9 : 12}>
+          <Grid container spacing={2}>
+            <Grid item className="product-grid">
+              <Box className="hero">
+                <p className="hero-heading">
+                  India's{" "}
+                  <span className="hero-highlight">FASTEST DELIVERY</span> to
+                  your door step
+                </p>
+              </Box>
             </Grid>
-          ))}
-
-        {/* CLEAN UP THE MULTIPLE CONDITIONAL RENDERING!!!!! */}
-        {!searchBarIsEmpty &&
-          !noResultsFound &&
-          arrayOfPdts.map((pdtInfo) => (
-            <Grid item md={3} xs={6} key={pdtInfo._id}>
-              <ProductCard product={pdtInfo}></ProductCard>
-            </Grid>
-          ))}
+            {state.loading ? (
+              <Grid
+                container
+                direction="column"
+                justifyContent="center"
+                alignItems="center"
+                mt={6}
+                mb={6}
+              >
+                <Grid item>
+                  <CircularProgress
+                    size={40}
+                    color="success"
+                    className="loading"
+                  />
+                </Grid>
+                <Grid item>
+                  <div>Loading Products...</div>
+                </Grid>
+              </Grid>
+            ) : (
+              <>
+                {state.products.length === 0 ? (
+                  <Grid
+                    container
+                    direction="column"
+                    justifyContent="center"
+                    alignItems="center"
+                    mt={6}
+                    mb={6}
+                  >
+                    <Grid item>
+                      <SentimentDissatisfied size={40} className="loading" />
+                    </Grid>
+                    <Grid item>
+                      <div>No products found</div>
+                    </Grid>
+                  </Grid>
+                ) : (
+                  <>
+                    {state.products.map((product) => (
+                      <Grid item xs={12} sm={6} md={3} key={product._id}>
+                        <ProductCard
+                          product={product}
+                          handleAddToCart={(event) => handleCart(product._id)}
+                        />
+                      </Grid>
+                    ))}
+                  </>
+                )}
+              </>
+            )}
+          </Grid>
+        </Grid>
+        {loggedIn !== null && (
+          <Grid item xs={12} md={3}>
+            <Cart
+              products={state.products}
+              items={state.cartItems}
+              handleQuantity={handleQuantity}
+            />
+          </Grid>
+        )}
       </Grid>
-
-      {!searchBarIsEmpty && noResultsFound && (
-        <Grid
-          container
-          justifyContent="center"
-          direction="column"
-          alignItems="center"
-          sx={{ height: "15rem" }}
-        >
-          <SentimentDissatisfied />
-          No products found
-        </Grid>
-      )}
-
-      {/* WHY SPECIFY CONTAINER????? */}
-      {/* Time to provide height like in CSS...*/}
-      {isLoading && (
-        <Grid
-          container
-          direction="column"
-          justifyContent="center"
-          alignItems="center"
-          sx={{ height: "15rem" }}
-        >
-          <CircularProgress />
-          Loading Products
-        </Grid>
-      )}
-
-      {/* TODO: CRIO_TASK_MODULE_CART - Display the Cart component */}
       <Footer />
     </div>
   );

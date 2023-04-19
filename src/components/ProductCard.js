@@ -1,79 +1,41 @@
-import { AddShoppingCartOutlined } from "@mui/icons-material";
-// import { makeStyles } from "@mui/styles";
-import {
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  CardMedia,
-  Rating,
-  Typography,
-} from "@mui/material";
-import React, { useEffect, useState } from "react";
+import * as React from 'react';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import Typography from '@mui/material/Typography';
+import { Button, CardActionArea, CardActions, Rating } from '@mui/material';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import "./ProductCard.css";
-import { AddShoppingCart } from "@mui/icons-material";
-import { CardActionArea } from "@mui/material";
-
-// HOW TO MAKE THE IMAGE DISPLAY FROM TOP AND NOT FROM CENTRE???????
-// const useStyles = makeStyles({
-//   card: {},
-//   media: { height: 300 },
-//   text: { fontWeight: "bold" },
-// });
 
 const ProductCard = ({ product, handleAddToCart }) => {
-  // const obj = {
-  //   name: "Tan Leatherette Weekender Duffle",
-  //   category: "Fashion",
-  //   cost: 150,
-  //   rating: 4,
-  //   image:
-  //     "https://crio-directus-assets.s3.ap-south-1.amazonaws.com/ff071a1c-1099-48f9-9b03-f858ccc53832.png",
-  //   id: "PmInA797xJhMIPti",
-  // };
-
-  // const classes = useStyles();
-
-  //const [rating, setRating] = useState(4);
-
-  //useEffect(() => {console.log("The product is:", product)},[])
-
+  const { name, cost, rating, image } = product;
   return (
     <Card className="card">
       <CardActionArea>
         <CardMedia
-          sx={{ height: 300 }}
-          // className={classes.media}
           component="img"
-          image={product.image}
-        ></CardMedia>
+          height="280"
+          image={image}
+          alt={name}
+        />
         <CardContent>
-          <Typography variant="subtitle1">{product.name}</Typography>
-          <Typography variant="subtitle1" 
-          sx = {{ fontWeight: "bold" }}
-          // className={classes.text}
-          >
-            ${product.cost}
+          <Typography gutterBottom variant="h6" component="div">
+            {name}
           </Typography>
-
-          <Rating
-            value={product.rating}
-            readOnly
-            // This is a read-only rating!!
-            // onChange={(event, newRating) => {
-            //   setRating(newRating);
-            // }}
-          />
+          <Typography variant="h6" fontWeight={700}>
+            ${cost}
+          </Typography>
+          <br />
+          <Rating name="read-only" value={rating} readOnly />
         </CardContent>
       </CardActionArea>
-      <Button
-        variant="contained"
-        startIcon={<AddShoppingCart />}
-        name="add to cart"
-      >
-        ADD TO CART
-      </Button>
+      <CardActions className='card-actions'>
+        <Button className='card-button' variant='contained' size="big" color="primary" startIcon={<AddShoppingCartIcon />} style={{'width':'100%'}} onClick={handleAddToCart}>
+          ADD TO CART
+        </Button>
+      </CardActions>
     </Card>
+    
   );
 };
 

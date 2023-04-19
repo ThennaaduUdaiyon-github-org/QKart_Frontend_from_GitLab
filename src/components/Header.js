@@ -1,132 +1,57 @@
-import { Search } from "@mui/icons-material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { InputAdornment } from "@mui/material";
-import { TextField } from "@mui/material";
 import { Avatar, Button, Stack } from "@mui/material";
+import { Link, useHistory } from "react-router-dom";
 import Box from "@mui/material/Box";
-import React, { useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import React from "react";
 import "./Header.css";
 
 const Header = ({ children, hasHiddenAuthButtons }) => {
-  //useEffect(() => {console.log("12345", typeof(hasHiddenAuthButtons));}, [])
-
-  const [clickedLogout, setClickedLogout] = useState(false);
-
-  useEffect(() => {
-    //console.log("Printing children...", children);
-    console.log("useEffect has been invoked!! 12345");
-  }, [clickedLogout]);
-
   const history = useHistory();
+  const user = localStorage.getItem("username");
+  const isLoggedIn = user ? true : false;
+
+  const handleLogout = (event) => {
+    localStorage.clear();
+    window.location.reload();
+    history.push("/");
+  };
 
   return (
     <Box className="header">
       <Box className="header-title">
         <img src="logo_light.svg" alt="QKart-icon"></img>
       </Box>
-      {/*When coming from Products page, hasHiddenAuthButtons is undefined!!!*/}
 
-      {/* {!hasHiddenAuthButtons && (
-        
-      )} */}
+      {children}
 
-      {hasHiddenAuthButtons && (
+      {!hasHiddenAuthButtons && (
         <Button
-          name="back to explore"
           className="explore-button"
           startIcon={<ArrowBackIcon />}
           variant="text"
-          //UNDERSTAND HOW WE USE UseHistory!!!!
-          onClick={() => {
-            history.push("/", { from: "Either Login page or Register page" });
-          }}
+          onClick={() => history.push("/")}
         >
           Back to explore
         </Button>
       )}
-
-      {/* When coming from products page ("/") but not logged in... 
-      Also check out https://stackoverflow.com/questions/16010827/html5-localstorage-checking-if-a-key-exists
-      */}
-
-      {/* {!hasHiddenAuthButtons && !localStorage.getItem("username") && (
-        <Box>
-          <TextField
-            fullWidth
-            placeholder="Search for items/categories"
-            name="search"
-            size="small"
-            // sx={{width: "40ch"}}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  {children}
-                </InputAdornment>
-              ),
-            }}
-          />
-        </Box>
-      )} */}
-
-      {children && !hasHiddenAuthButtons && !localStorage.getItem("username") && (
-        <Box>{children}</Box>
-      )}
-
-      {!hasHiddenAuthButtons && !localStorage.getItem("username") && (
-        <Box component="div">
-          <Button
-            name="login"
-            variant="text"
-            color="primary"
-            onClick={() => {
-              history.push("/login", { from: "Products page" });
-            }}
-          >
+      {hasHiddenAuthButtons && !isLoggedIn && (
+        <Stack direction="row">
+          <Button variant="text" onClick={() => history.push("/login")}>
             Login
           </Button>
-
-          <Button
-            name="register"
-            variant="contained"
-            color="primary"
-            onClick={() => {
-              history.push("/register", { from: "Products page" });
-            }}
-          >
+          <Button variant="contained" onClick={() => history.push("/register")}>
             Register
           </Button>
-        </Box>
+        </Stack>
       )}
-      {/* When coming from login page and logged in... */}
-      {!hasHiddenAuthButtons && localStorage.getItem("username") && (
-        <Box
-          component="div"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          {/* <Avatar src="avatar.png" />
-          {localStorage.getItem("username").username} */}
-          <img src={"avatar.png"} alt={localStorage.getItem("username")} />
-          {/* When below text is added, individual elements aren't accessible in inspect mode!! */}
-          {localStorage.getItem("username")}
-
-          <Button
-            name="logout"
-            variant="text"
-            color="primary"
-            onClick={() => {
-              history.push("/", { from: "Logged in products page" });
-              localStorage.clear();
-              setClickedLogout(true);
-            }}
-          >
+      {hasHiddenAuthButtons && isLoggedIn && (
+        <Stack direction="row" spacing={2}>
+          <Avatar alt={user} src="avatar.png" />
+          <p style={{ marginTop: "10px" }}>{user}</p>
+          <Button variant="text" onClick={handleLogout}>
             Logout
           </Button>
-        </Box>
+        </Stack>
       )}
     </Box>
   );
